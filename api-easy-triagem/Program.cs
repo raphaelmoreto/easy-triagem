@@ -1,5 +1,4 @@
-using System.Data;
-using MySql.Data.MySqlClient;
+using Repository;
 
 namespace api_easy_triagem
 {
@@ -10,9 +9,7 @@ namespace api_easy_triagem
             var builder = WebApplication.CreateBuilder(args); //INICIALIZA O APLICATIVO E CONFIGURA SERVIÇOS
 
             //A CADA REQUISIÇÃO DA API RECEBE UMA NOVA CONEXÃO COM O BANCO
-            builder.Services.AddScoped<IDbConnection>(sp =>
-                new MySqlConnection(builder.Configuration.GetConnectionString("DefaultConnection")));
-            //"sp => new MySqlConnection(...)" CRIA UMA NOVA CONEXÃO COM O MYSQL SEMPRE QUE A API PRECISAR
+            builder.Services.AddScoped<DBConnection>();
 
             builder.Services.AddControllers(); //ADICIONA SERVIÇOS NECESSÁRIOS DE SUPORTE PARA "controllers" DA API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
