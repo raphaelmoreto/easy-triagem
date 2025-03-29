@@ -1,19 +1,25 @@
 ﻿using Models;
-using Repository;
+using Repositories;
 using System.Data;
 using Dapper;
 
-namespace api_easy_triagem.Services
+namespace Services
 {
     public class UsuarioService
     {
-        private readonly DBConnection _dBConnection;
+        private readonly DBConnection _dbConnection;
 
         public UsuarioService()
         {
-            _dBConnection = new DBConnection();
+            _dbConnection = new DBConnection();
         }
 
+        public async Task<IEnumerable<Usuario>> ListaUsuarios()
+        {
+            using IDbConnection db = _dbConnection.GetConnection();
 
+            return await db.QueryAsync<Usuario>("SELECT *" +
+                                                                     "FROM usuario");
+        }
     }
 }

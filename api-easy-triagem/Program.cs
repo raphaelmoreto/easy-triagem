@@ -1,4 +1,5 @@
-using Repository;
+using Services;
+using Repositories;
 
 namespace api_easy_triagem
 {
@@ -10,6 +11,7 @@ namespace api_easy_triagem
 
             //A CADA REQUISIÇÃO DA API RECEBE UMA NOVA CONEXÃO COM O BANCO
             builder.Services.AddScoped<DBConnection>();
+            builder.Services.AddScoped<UsuarioService>();
 
             builder.Services.AddControllers(); //ADICIONA SERVIÇOS NECESSÁRIOS DE SUPORTE PARA "controllers" DA API
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle

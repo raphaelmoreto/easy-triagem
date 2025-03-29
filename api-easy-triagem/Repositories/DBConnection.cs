@@ -1,7 +1,7 @@
 ﻿using System.Data;
 using MySql.Data.MySqlClient;
 
-namespace Repository
+namespace Repositories
 {
     public class DBConnection
     {
@@ -9,7 +9,7 @@ namespace Repository
 
         public DBConnection()
         {
-            _connection = "Server=localhost;Database=DbEasyTriagem;User=root;Password='';";
+            _connection = "Server=localhost;Database=easy_triagem;User=root;Password=''";
         }
 
         public IDbConnection GetConnection()
