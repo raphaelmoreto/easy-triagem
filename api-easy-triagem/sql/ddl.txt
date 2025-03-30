@@ -116,3 +116,41 @@ FOREIGN KEY (fk_idUsuario) REFERENCES usuario (id);
 ALTER TABLE triagem
 ADD CONSTRAINT fk_triagem_medico
 FOREIGN KEY (fk_idMedico) REFERENCES medico (id);
+
+DELIMITER $
+CREATE PROCEDURE cadastroCliente(IN p_nome VARCHAR(100),
+								 IN p_dataNascimento DATE,
+                                 IN p_sexo_biologico VARCHAR(10),
+                                 IN p_cpf VARCHAR(11),
+                                 IN p_email VARCHAR(100),
+                                 IN p_dataCadastro DATE,
+                                 IN p_logradouro INT,
+                                 IN p_endereco VARCHAR(150),
+                                 IN p_numero VARCHAR(50),
+                                 IN p_complemento VARCHAR(100),
+                                 IN p_bairro VARCHAR(100),
+                                 IN p_cidade VARCHAR(100),
+                                 IN p_estadoUF INT,
+                                 IN p_cep VARCHAR(8),
+                                 OUT msg TINYINT)
+BEGIN
+	DECLARE v_email INT;
+	DECLARE v_fk_endereco INT;
+    
+    SELECT COUNT(*) INTO v_email FROM usuario WHERE email = p_email;
+    
+    IF v_email > 0 THEN
+		SET msg = 0;
+	ELSE    
+		INSERT INTO endereco (fk_logradouro, endereco, numero, complemento, bairro, cidade, fk_estadoUF, cep)
+					  VALUES (p_logradouro, p_endereco, p_numero, p_complemento, p_bairro, p_cidade, p_estadoUF, p_cep);
+					  
+		SET v_fk_endereco = LAST_INSERT_ID();
+		
+		INSERT INTO usuario (nome, data_nascimento, sexo_biologico, cpf, email, data_cadastro, fk_endereco)
+					 VALUES (p_nome, p_dataNascimento, p_sexo_biologico, p_cpf, p_email, p_dataCadastro, v_fk_endereco);
+		
+        SET msg = 1;
+	END IF;
+END $
+DELIMITER ;
