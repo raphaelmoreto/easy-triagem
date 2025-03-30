@@ -16,6 +16,24 @@ namespace Controllers
             _usuarioService = usuarioService;
         }
 
+        [HttpPost]
+        public async Task<IActionResult> CadastrarUsuario([FromBody] Usuario usuario) //O "[FromBody]" É UM DECORADOR QUE IRÁ PEGAR O JSON E CONVERTER OS DADOS EM UM OBJETO "Usuario"
+        {
+            if (usuario == null)
+            {
+                return BadRequest();
+            }
+
+            var cadastro = await _usuarioService.Insert(usuario);
+
+            if (!cadastro)
+            {
+                return Unauthorized("EMAIL JÁ ESTÁ EM USO");
+            }
+
+            return Ok("USUÁRIO CADASTRADO COM SUCESSO");
+        }
+
         [HttpGet]
         public async Task<IActionResult> ListaUsuarios() //O "IActionResult" PERMITE QUE O MÉTODO RETORNE DIFERENTES TIPOS DE RESPOSTAS HTTP
         {

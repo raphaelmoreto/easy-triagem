@@ -1,0 +1,118 @@
+#DROP DATABASE IF EXISTS easy_triagem;
+
+CREATE DATABASE easy_triagem;
+
+USE easy_triagem;
+
+CREATE TABLE estado(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    sigla_estado CHAR(2) NOT NULL
+);
+
+CREATE TABLE logradouro(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    logradouro VARCHAR(50)
+);
+
+CREATE TABLE endereco(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    fk_logradouro INT NOT NULL,
+    endereco VARCHAR(150) NOT NULL,
+    numero VARCHAR(50) NOT NULL,
+    complemento VARCHAR(100),
+    bairro VARCHAR(100) NOT NULL,
+    cidade VARCHAR(100) NOT NULL,
+    fk_estadoUF INT NOT NULL,
+    cep VARCHAR(8) NOT NULL
+);
+
+ALTER TABLE endereco
+ADD CONSTRAINT fk_endereco_estado
+FOREIGN KEY (fk_estadoUF) REFERENCES estado (id);
+
+ALTER TABLE endereco
+ADD CONSTRAINT fk_endereco_logradouro
+FOREIGN KEY (fk_logradouro) REFERENCES logradouro (id);
+
+CREATE TABLE usuario(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    fk_endereco INT NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    data_nascimento DATE NOT NULL,
+    sexo_biologico ENUM('MASCULINO', 'FEMININO') NOT NULL,
+    cpf VARCHAR(11) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    data_cadastro DATE NOT NULL, #FAZER COM QUE NO BACK-END ME TRAGA O DIA DE CADASTRO AUTOMATICAMENTE
+    situacao_status TINYINT DEFAULT 1
+);
+
+ALTER TABLE usuario
+ADD CONSTRAINT fk_usuario_estado
+FOREIGN KEY (fk_endereco) REFERENCES endereco (id);
+
+CREATE TABLE telefone(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    fk_idUsuario INT NOT NULL,
+    prefixo VARCHAR(10) NOT NULL,
+    ddd VARCHAR(10) NOT NULL, #TODO DDD FIXO COMEÇA COM '0'
+    numero VARCHAR(11) UNIQUE NOT NULL,
+    tipo_telefone ENUM('CELULAR', 'COMERCIAL', 'RESIDENCIAL') NOT NULL,
+    situacao_status TINYINT DEFAULT 1
+);
+
+ALTER TABLE telefone
+ADD CONSTRAINT fk_telefone_usuario
+FOREIGN KEY (fk_idUsuario) REFERENCES usuario (id);
+
+CREATE TABLE especialidade(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    especialidade VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE medico(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    fk_especialidade INT NOT NULL,
+    nome VARCHAR(100) NOT NULL,
+    cpf VARCHAR(11) UNIQUE NOT NULL,
+    crm VARCHAR(10) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    data_contratacao DATE NOT NULL,
+    sexo_biologico ENUM('MASCULINO', 'FEMININO') NOT NULL,
+    data_nascimento DATE NOT NULL,
+    situacao_status TINYINT DEFAULT 1
+);
+
+ALTER TABLE medico
+ADD CONSTRAINT fk_medico_especialidade
+FOREIGN KEY (fk_especialidade) REFERENCES especialidade (id);
+
+CREATE TABLE classificacao_risco(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    cor VARCHAR(100) UNIQUE NOT NULL
+);
+
+CREATE TABLE triagem(
+	codigo_triagem INT AUTO_INCREMENT PRIMARY KEY,
+    fk_classificacao_risco INT NOT NULL,
+    fk_idUsuario INT NOT NULL,
+    fk_idMedico INT NOT NULL,
+    sintomas TEXT NOT NULL,
+    observacoes TEXT,
+    data_triagem DATETIME NOT NULL, #FAZER COM QUE NO BACK-END ME TRAGA O DIA E HORA DO CADASTRO AUTOMATICAMENTE
+    pressao_arterial VARCHAR(10),
+    frequencia_cardiaca INT,
+    temperatura DECIMAL(2,1),
+    oxigenio INT
+);
+
+ALTER TABLE triagem
+ADD CONSTRAINT fk_triagem_classificacao
+FOREIGN KEY (fk_classificacao_risco) REFERENCES classificacao_risco (id);
+
+ALTER TABLE triagem
+ADD CONSTRAINT fk_triagem_usuario
+FOREIGN KEY (fk_idUsuario) REFERENCES usuario (id);
+
+ALTER TABLE triagem
+ADD CONSTRAINT fk_triagem_medico
+FOREIGN KEY (fk_idMedico) REFERENCES medico (id);
