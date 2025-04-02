@@ -3,7 +3,6 @@ using Repositories;
 using System.Data;
 using Dapper;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Services
 {
@@ -16,35 +15,58 @@ namespace Services
             _dbConnection = new DBConnection();
         }
 
-        public async Task<bool> Insert(Usuario usuario)
+        private async Task<bool> InserirEnderecoUsuarioAsync(Endereco endereco, int idUsuario)
         {
             using IDbConnection db = _dbConnection.GetConnection();
 
-            var parametros = new DynamicParameters(new
+            var sb = new StringBuilder();
+            sb.AppendLine("INSERT INTO endereco (fk_usuario, fk_logradouro, endereco, numero, complemento, bairro, cidade, fk_estadoUF, cep)");
+            sb.AppendLine("                      VALUES (@p_idUsuario, @p_logradouro, @p_endereco, @p_numero, @p_complemento, @p_bairro, @p_cidade, @p_estadoUF, @p_cep)");
+
+            var parametrosEndereco = new DynamicParameters(new
+            {
+                p_idUsuario = idUsuario,
+                p_logradouro = endereco.Logradouro,
+                p_endereco = endereco._Endereco,
+                p_numero = endereco.Numero,
+                p_complemento = endereco.Complemento,
+                p_bairro = endereco.Bairro,
+                p_cidade = endereco.Cidade,
+                p_estadoUF = endereco.EstadoUF,
+                p_cep = endereco.CEP
+            });
+
+            int retorno = await db.ExecuteAsync(sb.ToString(), parametrosEndereco);
+            return retorno > 0;
+        }
+
+        public async Task<bool> InserirUsuarioAsync(Usuario usuario)
+        {
+            using IDbConnection db = _dbConnection.GetConnection();
+
+            var parametrosUsuario = new DynamicParameters(new
             {
                 p_nome = usuario.Nome,
                 p_dataNascimento = usuario.DataNascimento,
                 p_sexo_biologico = usuario.SexoBiologico,
                 p_cpf = usuario.CPF,
                 p_email = usuario.Email,
-                p_dataCadastro = usuario.DataCadastro,
-                p_logradouro = usuario.Endereco.Logradouro,
-                p_endereco = usuario.Endereco._Endereco,
-                p_numero = usuario.Endereco.Numero,
-                p_complemento = usuario.Endereco.Complemento,
-                p_bairro = usuario.Endereco.Bairro,
-                p_cidade = usuario.Endereco.Cidade,
-                p_estadoUF = usuario.Endereco.EstadoUF,
-                p_cep = usuario.Endereco.CEP
+                p_dataCadastro = usuario.DataCadastro
             });
 
-            parametros.Add("@msg", dbType: DbType.Byte, direction: ParameterDirection.Output); //DEFINE O PARÂMETRO DE SAÍDA
+            parametrosUsuario.Add("@msg", dbType: DbType.Byte, direction: ParameterDirection.Output); //DEFINE O PARÂMETRO DE SAÍDA
 
             //INFORMA AO DAPPER QUE ESTÁ EXECUTANDO UMA "Stored Procedure" E NÃO UMA QUERY COMUM
-            await db.ExecuteAsync("cadastroCliente", parametros, commandType: CommandType.StoredProcedure);
+            await db.ExecuteAsync("cadastroUsuario", parametrosUsuario, commandType: CommandType.StoredProcedure);
+            int idUsuario = parametrosUsuario.Get<byte>("@msg"); //OBTEM O VALOR DO PARÂMETRO OUT
 
-           int resultado = parametros.Get<byte>("@msg"); //OBTEM O VALOR DO PARÂMETRO OUT
-            return resultado == 1;
+            if (idUsuario == 0)
+            {
+                return false;
+            }
+
+            var resultado = await InserirEnderecoUsuarioAsync(usuario.Endereco, idUsuario);
+            return resultado;
         }
 
         public async Task<IEnumerable<Usuario>> ListaUsuarios()

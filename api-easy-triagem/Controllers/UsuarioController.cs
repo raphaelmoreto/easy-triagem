@@ -19,12 +19,7 @@ namespace Controllers
         [HttpPost]
         public async Task<IActionResult> CadastrarUsuario([FromBody] Usuario usuario) //O "[FromBody]" É UM DECORADOR QUE IRÁ PEGAR O JSON E CONVERTER OS DADOS EM UM OBJETO "Usuario"
         {
-            if (usuario == null)
-            {
-                return BadRequest();
-            }
-
-            var cadastro = await _usuarioService.Insert(usuario);
+            var cadastro = await _usuarioService.InserirUsuarioAsync(usuario);
 
             if (!cadastro)
             {

@@ -4,6 +4,17 @@ CREATE DATABASE easy_triagem;
 
 USE easy_triagem;
 
+CREATE TABLE usuario(
+	id INT AUTO_INCREMENT PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    data_nascimento DATE NOT NULL,
+    sexo_biologico ENUM('MASCULINO', 'FEMININO') NOT NULL,
+    cpf VARCHAR(11) UNIQUE NOT NULL,
+    email VARCHAR(100) UNIQUE NOT NULL,
+    data_cadastro DATE NOT NULL, #FAZER COM QUE NO BACK-END ME TRAGA O DIA DE CADASTRO AUTOMATICAMENTE
+    situacao_status TINYINT DEFAULT 1
+);
+
 CREATE TABLE estado(
 	id INT AUTO_INCREMENT PRIMARY KEY,
     sigla_estado CHAR(2) NOT NULL
@@ -16,6 +27,7 @@ CREATE TABLE logradouro(
 
 CREATE TABLE endereco(
 	id INT AUTO_INCREMENT PRIMARY KEY,
+    fk_usuario INT NOT NULL,
     fk_logradouro INT NOT NULL,
     endereco VARCHAR(150) NOT NULL,
     numero VARCHAR(50) NOT NULL,
@@ -27,28 +39,16 @@ CREATE TABLE endereco(
 );
 
 ALTER TABLE endereco
+ADD CONSTRAINT fk_endereco_usuario
+FOREIGN KEY (fk_usuario) REFERENCES usuario (id);
+
+ALTER TABLE endereco
 ADD CONSTRAINT fk_endereco_estado
 FOREIGN KEY (fk_estadoUF) REFERENCES estado (id);
 
 ALTER TABLE endereco
 ADD CONSTRAINT fk_endereco_logradouro
 FOREIGN KEY (fk_logradouro) REFERENCES logradouro (id);
-
-CREATE TABLE usuario(
-	id INT AUTO_INCREMENT PRIMARY KEY,
-    fk_endereco INT NOT NULL,
-    nome VARCHAR(100) NOT NULL,
-    data_nascimento DATE NOT NULL,
-    sexo_biologico ENUM('MASCULINO', 'FEMININO') NOT NULL,
-    cpf VARCHAR(11) UNIQUE NOT NULL,
-    email VARCHAR(100) UNIQUE NOT NULL,
-    data_cadastro DATE NOT NULL, #FAZER COM QUE NO BACK-END ME TRAGA O DIA DE CADASTRO AUTOMATICAMENTE
-    situacao_status TINYINT DEFAULT 1
-);
-
-ALTER TABLE usuario
-ADD CONSTRAINT fk_usuario_estado
-FOREIGN KEY (fk_endereco) REFERENCES endereco (id);
 
 CREATE TABLE telefone(
 	id INT AUTO_INCREMENT PRIMARY KEY,
@@ -118,39 +118,31 @@ ADD CONSTRAINT fk_triagem_medico
 FOREIGN KEY (fk_idMedico) REFERENCES medico (id);
 
 DELIMITER $
-CREATE PROCEDURE cadastroCliente(IN p_nome VARCHAR(100),
+CREATE PROCEDURE cadastroUsuario(IN p_nome VARCHAR(100),
 								 IN p_dataNascimento DATE,
                                  IN p_sexo_biologico VARCHAR(10),
                                  IN p_cpf VARCHAR(11),
                                  IN p_email VARCHAR(100),
                                  IN p_dataCadastro DATE,
-                                 IN p_logradouro INT,
-                                 IN p_endereco VARCHAR(150),
-                                 IN p_numero VARCHAR(50),
-                                 IN p_complemento VARCHAR(100),
-                                 IN p_bairro VARCHAR(100),
-                                 IN p_cidade VARCHAR(100),
-                                 IN p_estadoUF INT,
-                                 IN p_cep VARCHAR(8),
                                  OUT msg TINYINT)
 BEGIN
 	DECLARE v_email INT;
-	DECLARE v_fk_endereco INT;
     
-    SELECT COUNT(*) INTO v_email FROM usuario WHERE email = p_email;
+    SELECT COUNT(*)
+    INTO v_email
+    FROM usuario
+    WHERE email = p_email;
     
     IF v_email > 0 THEN
 		SET msg = 0;
-	ELSE    
-		INSERT INTO endereco (fk_logradouro, endereco, numero, complemento, bairro, cidade, fk_estadoUF, cep)
-					  VALUES (p_logradouro, p_endereco, p_numero, p_complemento, p_bairro, p_cidade, p_estadoUF, p_cep);
-					  
-		SET v_fk_endereco = LAST_INSERT_ID();
+	ELSE		
+		INSERT INTO usuario (nome, data_nascimento, sexo_biologico, cpf, email, data_cadastro)
+					 VALUES (p_nome, p_dataNascimento, p_sexo_biologico, p_cpf, p_email, p_dataCadastro);
 		
-		INSERT INTO usuario (nome, data_nascimento, sexo_biologico, cpf, email, data_cadastro, fk_endereco)
-					 VALUES (p_nome, p_dataNascimento, p_sexo_biologico, p_cpf, p_email, p_dataCadastro, v_fk_endereco);
-		
-        SET msg = 1;
+        SELECT id
+        INTO msg
+        FROM usuario
+        WHERE id = LAST_INSERT_ID();
 	END IF;
 END $
 DELIMITER ;
